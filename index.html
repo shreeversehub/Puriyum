@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Puriyum – Lab Report Explainer Demo</title>
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+--bg:#f0f2f5;--card:#fff;--text:#111b21;--muted:#667781;--accent:#128c7e;--in:#fff;--out:#d9fdd3;--line:#e2e6e9;--chat:#efeae2}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0b141a;--card:#1f2c34;--text:#e9edef;--muted:#8696a0;--in:#202c33;--out:#005c4b;--line:#2a3942;--chat:#0b141a}}
+:root[data-theme="dark"]{--bg:#0b141a;--card:#1f2c34;--text:#e9edef;--muted:#8696a0;--in:#202c33;--out:#005c4b;--line:#2a3942;--chat:#0b141a}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans Tamil","Noto Sans Devanagari",sans-serif}
+main{max-width:520px;margin:0 auto;padding:14px}
+h1{font-size:20px;margin:4px 0 2px}.sub{color:var(--muted);font-size:13px;margin:0 0 12px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px;margin-bottom:12px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+button,select,input{font:inherit;color:var(--text)}
+button{border:1px solid var(--line);background:var(--card);border-radius:20px;padding:7px 12px;cursor:pointer}
+button.pri{background:var(--accent);color:#fff;border-color:var(--accent);font-weight:600;width:100%;border-radius:12px;padding:11px;margin-top:10px}
+select{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:6px}
+.grid{display:grid;grid-template-columns:1fr 84px 62px;gap:6px 8px;align-items:center;margin-top:10px}
+.grid input{width:100%;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:6px;text-align:right}
+.u{color:var(--muted);font-size:12px}
+.chat{background:var(--chat);border-radius:14px;border:1px solid var(--line);min-height:240px;max-height:70vh;overflow-y:auto;padding:10px;display:flex;flex-direction:column;gap:8px}
+.hd{background:var(--accent);color:#fff;border-radius:14px 14px 0 0;padding:10px 12px;font-weight:600;display:flex;gap:8px;align-items:center}
+.b{max-width:92%;padding:8px 10px;border-radius:10px;background:var(--in);box-shadow:0 1px 1px rgba(0,0,0,.12);word-wrap:break-word}
+.b.me{align-self:flex-end;background:var(--out)}
+.t{color:var(--muted);font-size:12px}
+.res{display:grid;grid-template-columns:22px 1fr;gap:2px 6px;margin:6px 0}
+.res small{grid-column:2;color:var(--muted)}
+.dots span{display:inline-block;width:7px;height:7px;margin:0 2px;border-radius:50%;background:var(--muted);animation:d 1s infinite}
+.dots span:nth-child(2){animation-delay:.2s}.dots span:nth-child(3){animation-delay:.4s}
+@keyframes d{50%{opacity:.2}}
+.dis{font-size:12px;color:var(--muted);border-top:1px solid var(--line);margin-top:8px;padding-top:6px}
+</style></head><body><main>
+<h1>🩺 Puriyum <span class="u">(புரியும்)</span></h1>
+<p class="sub">Demo: your lab report, explained safely in your language. Edit values, pick a language, and send.</p>
+
+<div class="card">
+  <div class="row">
+    <button onclick="load(0)">Sample: Meenakshi</button>
+    <button onclick="load(1)">Sample: Healthy</button>
+    <select id="lang"><option value="en">English</option><option value="ta">தமிழ்</option><option value="hi">हिन्दी</option></select>
+  </div>
+  <div class="grid" id="form"></div>
+  <button class="pri" onclick="send()">Send report on WhatsApp ➤</button>
+</div>
+
+<div class="hd">🟢 Puriyum Bot <span class="t" style="color:#d6f5ee">online</span></div>
+<div class="chat" id="chat" style="border-radius:0 0 14px 14px"></div>
+<p class="sub" style="margin-top:10px">Prototype note: OCR is represented by the editable form. Severity comes from a fixed rules engine, never from AI guesswork.</p>
+</main>
+<script>
+const T=[
+{id:'hba1c',u:'%',lo:4,hi:5.6,cl:3.5,ch:6.5,n:['HbA1c (3-month sugar)','HbA1c (3 மாத சர்க்கரை)','HbA1c (3 माह की शुगर)'],
+ a:['Shows your average blood sugar over 3 months.','கடந்த 3 மாதங்களின் சராசரி இரத்த சர்க்கரையை காட்டுகிறது.','पिछले 3 महीनों की औसत ब्लड शुगर दिखाता है।']},
+{id:'fbs',u:'mg/dL',lo:70,hi:99,cl:54,ch:126,n:['Fasting blood sugar','வெறும் வயிற்று சர்க்கரை','खाली पेट शुगर'],
+ a:['Sugar level in your blood after fasting.','வெறும் வயிற்றில் இரத்த சர்க்கரை அளவு.','खाली पेट खून में शुगर का स्तर।']},
+{id:'tsh',u:'mIU/L',lo:.4,hi:4,cl:.1,ch:10,n:['TSH (thyroid)','TSH (தைராய்டு)','TSH (थायराइड)'],
+ a:['Shows how active your thyroid is. High often means an underactive thyroid.','தைராய்டு செயல்பாட்டை காட்டுகிறது. அதிகம் என்றால் தைராய்டு மந்தமாக இருக்கலாம்.','थायराइड की सक्रियता बताता है। ज़्यादा होने पर थायराइड कम सक्रिय हो सकता है।']},
+{id:'chol',u:'mg/dL',lo:0,hi:199,cl:-1,ch:240,n:['Total cholesterol','மொத்த கொலஸ்ட்ரால்','कुल कोलेस्ट्रॉल'],
+ a:['Fat in your blood; high levels raise heart risk over time.','இரத்தத்தில் கொழுப்பு அளவு; அதிகமானால் இதய ஆபத்து கூடும்.','खून में वसा का स्तर; ज़्यादा होने पर दिल का खतरा बढ़ सकता है।']},
+{id:'hb',u:'g/dL',lo:12,hi:15.5,cl:8,ch:18,n:['Hemoglobin','ஹீமோகுளோபின்','हीमोग्लोबिन'],
+ a:['Carries oxygen in your blood. Low can cause tiredness.','ஆக்சிஜனை எடுத்துச் செல்லும் புரதம். குறைந்தால் சோர்வு ஏற்படலாம்.','ऑक्सीजन ले जाने वाला प्रोटीन। कम होने पर थकान हो सकती है।']},
+{id:'creat',u:'mg/dL',lo:.6,hi:1.2,cl:.3,ch:2,n:['Creatinine (kidney)','கிரியேட்டினின் (சிறுநீரகம்)','क्रिएटिनिन (किडनी)'],
+ a:['A waste product; shows how well kidneys filter.','கழிவுப் பொருள்; சிறுநீரகம் எவ்வளவு நன்றாக வடிகட்டுகிறது என்பதை காட்டும்.','एक अपशिष्ट पदार्थ; किडनी की छानने की क्षमता दिखाता है।']},
+{id:'sgpt',u:'U/L',lo:7,hi:56,cl:0,ch:150,n:['SGPT (liver)','SGPT (கல்லீரல்)','SGPT (लिवर)'],
+ a:['A liver enzyme; high can mean liver irritation.','கல்லீரல் என்சைம்; அதிகம் என்றால் கல்லீரல் பாதிப்பு இருக்கலாம்.','लिवर एंजाइम; ज़्यादा होने पर लिवर में सूजन हो सकती है।']}];
+const S=[[8.1,142,6.4,212,11.2,.9,34],[5.2,88,2.1,170,13.5,.8,28]];
+const L={
+en:{hi:'Hi! Here is your report explained:',st:['Normal','Keep an eye','See a doctor soon'],d:['Low','High'],r:'Normal range',
+ sum:(r,y,g)=>`${r} need a doctor soon, ${y} to keep an eye on, ${g} normal.`,q:'Questions to ask your doctor',
+ qs:['Do these results need treatment or a repeat test?','Should I change my diet or activity?','When should I test again?'],
+ dis:"I'm not a doctor and can't diagnose. Please confirm with your doctor.",me:'📄 Lab report sent',ls:'🔊 Listen',sp:'en-IN'},
+ta:{hi:'வணக்கம்! உங்கள் அறிக்கையின் விளக்கம்:',st:['சாதாரணம்','கவனியுங்கள்','விரைவில் மருத்துவரை பாருங்கள்'],d:['குறைவு','அதிகம்'],r:'சாதாரண அளவு',
+ sum:(r,y,g)=>`${r} விரைவில் மருத்துவரை பார்க்க வேண்டியவை, ${y} கவனிக்க வேண்டியவை, ${g} சாதாரணம்.`,q:'மருத்துவரிடம் கேட்க வேண்டியவை',
+ qs:['இந்த முடிவுகளுக்கு சிகிச்சை அல்லது மீண்டும் பரிசோதனை தேவையா?','உணவு அல்லது உடற்பயிற்சியில் மாற்றம் தேவையா?','அடுத்த பரிசோதனை எப்போது?'],
+ dis:'நான் மருத்துவர் அல்ல, நோயை கண்டறிய முடியாது. தயவுசெய்து உங்கள் மருத்துவரிடம் உறுதிப்படுத்துங்கள்.',me:'📄 அறிக்கை அனுப்பப்பட்டது',ls:'🔊 கேளுங்கள்',sp:'ta-IN'},
+hi:{hi:'नमस्ते! आपकी रिपोर्ट की जानकारी:',st:['सामान्य','ध्यान दें','जल्द डॉक्टर से मिलें'],d:['कम','ज्यादा'],r:'सामान्य सीमा',
+ sum:(r,y,g)=>`${r} में जल्द डॉक्टर से मिलें, ${y} पर ध्यान दें, ${g} सामान्य हैं।`,q:'डॉक्टर से पूछने के सवाल',
+ qs:['क्या इन नतीजों के लिए इलाज या दोबारा जांच ज़रूरी है?','क्या खान-पान या दिनचर्या बदलनी चाहिए?','अगली जांच कब करानी चाहिए?'],
+ dis:'मैं डॉक्टर नहीं हूँ और बीमारी की पहचान नहीं कर सकता। कृपया अपने डॉक्टर से पुष्टि करें।',me:'📄 रिपोर्ट भेजी गई',ls:'🔊 सुनें',sp:'hi-IN'}};
+const $=id=>document.getElementById(id), E=['🟢','🟡','🔴'];
+$('form').innerHTML=T.map(t=>`<div>${t.n[0]}</div><input id="v_${t.id}" type="number" step="any" inputmode="decimal"><span class="u">${t.u}</span>`).join('');
+function load(i){T.forEach((t,k)=>$('v_'+t.id).value=S[i][k])}
+function status(t,v){if(v<t.lo)return v<=t.cl?2:1;if(v>t.hi)return v>=t.ch?2:1;return 0}
+function add(html,me){const d=document.createElement('div');d.className='b'+(me?' me':'');d.innerHTML=html;$('chat').appendChild(d);$('chat').scrollTop=1e6;return d}
+const wait=ms=>new Promise(r=>setTimeout(r,ms));
+let busy=false;
+async function send(){
+ if(busy)return;const lg=$('lang').value,l=L[lg],k=['en','ta','hi'].indexOf(lg);
+ const rows=T.map(t=>({t,v:parseFloat($('v_'+t.id).value)})).filter(x=>!isNaN(x.v));
+ if(!rows.length){alert('Enter at least one value');return}
+ busy=true;
+ add(`${l.me}<br><span class="t">${rows.length} tests</span>`,true);
+ const ty=add('<span class="dots"><span></span><span></span><span></span></span>');await wait(1300);ty.remove();
+ const c=[0,0,0];rows.forEach(x=>{x.s=status(x.t,x.v);c[x.s]++});
+ add(`<b>${l.hi}</b><br>${l.sum(c[2],c[1],c[0])}`);await wait(700);
+ let h='';
+ rows.forEach(x=>{const t=x.t,dir=x.v<t.lo?0:1;
+  h+=`<div class="res"><span>${E[x.s]}</span><span><b>${t.n[k]}</b>: ${x.v} ${t.u} · ${l.st[x.s]}</span>`;
+  if(x.s>0)h+=`<small>${l.d[dir]} · ${l.r}: ${t.lo}–${t.hi}<br>${t.a[k]}</small>`;h+='</div>'});
+ add(h);await wait(700);
+ const m=add(`<b>${l.q}</b><ul style="margin:4px 0 0;padding-left:18px">${l.qs.map(q=>`<li>${q}</li>`).join('')}</ul><div class="dis">⚠️ ${l.dis}</div><button style="margin-top:8px" id="ls">${l.ls}</button>`);
+ const bad=rows.filter(x=>x.s>0).map(x=>`${x.t.n[k]}: ${l.d[x.v<x.t.lo?0:1]}. ${x.t.a[k]}`).join(' ');
+ m.querySelector('#ls').onclick=()=>{try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(l.sum(c[2],c[1],c[0])+' '+bad+' '+l.dis);u.lang=l.sp;speechSynthesis.speak(u)}catch(e){}};
+ busy=false;
+}
+load(0);
+add('👋 Send a lab report and I will explain it in simple words.');
+</script></body></html>
